@@ -1,6 +1,8 @@
 import os
 import sys
 import traceback
+import http.server
+import socketserver
 
 def render_video():
     """Render the animation without requiring shell access"""
@@ -31,7 +33,7 @@ def render_video():
             "media/videos/main/720p16/StickmanFight.mp4",
             "media/videos/720p16/StickmanFight.mp4",
             "media/videos/StickmanFight/720p16/StickmanFight.mp4",
-            "media/videos/StickmanFight/720p16/StickmanFight.mp4"
+            "media/videos/1280p16/StickmanFight.mp4",  # Your logs show 1280p16!
         ]
         
         video_path = None
@@ -57,14 +59,14 @@ def render_video():
         
         # Create download page
         with open("index.html", "w") as f:
-            f.write("""
+            f.write(f"""
             <!DOCTYPE html>
             <html>
             <head>
                 <title>Download Stickman Video</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <style>
-                    body {
+                    body {{
                         font-family: Arial, sans-serif;
                         text-align: center;
                         padding: 20px;
@@ -75,20 +77,20 @@ def render_video():
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                    }
-                    .container {
+                    }}
+                    .container {{
                         background: rgba(255,255,255,0.1);
                         backdrop-filter: blur(10px);
                         padding: 40px;
                         border-radius: 20px;
                         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                         max-width: 600px;
-                    }
-                    h1 {
+                    }}
+                    h1 {{
                         margin-bottom: 20px;
                         font-size: 2em;
-                    }
-                    .download-btn {
+                    }}
+                    .download-btn {{
                         background: #4A90E2;
                         color: white;
                         padding: 15px 40px;
@@ -101,26 +103,21 @@ def render_video():
                         transition: transform 0.3s, box-shadow 0.3s;
                         border: none;
                         cursor: pointer;
-                    }
-                    .download-btn:hover {
+                    }}
+                    .download-btn:hover {{
                         transform: translateY(-2px);
                         box-shadow: 0 10px 30px rgba(74,144,226,0.5);
-                    }
-                    .info {
+                    }}
+                    .info {{
                         margin-top: 30px;
                         color: rgba(255,255,255,0.8);
                         font-size: 14px;
-                    }
-                    .success {
+                    }}
+                    .success {{
                         color: #4CAF50;
                         font-size: 48px;
                         margin-bottom: 20px;
-                    }
-                    .error {
-                        color: #ff6b6b;
-                        font-size: 24px;
-                        margin-bottom: 20px;
-                    }
+                    }}
                 </style>
             </head>
             <body>
@@ -131,14 +128,14 @@ def render_video():
                         "The Light Stick vs. The Bow"<br>
                         <span style="font-size: 14px;">16 FPS | 30 Seconds | With Sound Effects</span>
                     </p>
-                    <a href="/media/videos/main/720p16/StickmanFight.mp4" 
+                    <a href="{video_path if video_path else '/media/videos/1280p16/StickmanFight.mp4'}" 
                        download="stickman_fight.mp4" 
                        class="download-btn">
                         📥 Download Video
                     </a>
                     <div class="info">
                         ⚡ Video includes sound effects<br>
-                        🎬 8 scenes + bonus selfie frame<br>
+                        🎬 47 animations | 8 scenes + bonus selfie<br>
                         😂 "New aesthetic unlocked."<br>
                         🐍 Python 3.9 + Manim 0.17.3
                     </div>
@@ -148,18 +145,20 @@ def render_video():
             """)
         
         print("✅ Download page created: index.html")
-        print("🌐 Visit your Render URL to download the video")
+        print("🌐 Starting web server on port 10000...")
+        
+        # Start a simple HTTP server to serve the video
+        PORT = 10000
+        Handler = http.server.SimpleHTTPRequestHandler
+        
+        with socketserver.TCPServer(("", PORT), Handler) as httpd:
+            print(f"🚀 Server running at http://0.0.0.0:{PORT}")
+            print("✅ Video available for download!")
+            httpd.serve_forever()
         
     except ImportError as e:
         print(f"❌ Import error: {e}")
         print("💡 Check that all dependencies are installed correctly")
-        print("📋 Current installed packages:")
-        try:
-            import pkg_resources
-            installed = [d.project_name for d in pkg_resources.working_set]
-            print(", ".join(sorted(installed)[:10]) + "...")
-        except:
-            pass
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error rendering video: {e}")

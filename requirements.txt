@@ -1,0 +1,5 @@
+manim==0.18.1
+numpy==1.23.5
+pillow==9.5.0
+typing-extensions==4.5.0
+importlib-metadata==6.0.0

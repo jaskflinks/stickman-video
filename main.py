@@ -1,6 +1,8 @@
 from manim import *
 import numpy as np
 import struct
+import tempfile
+import os
 
 class StickmanFight(Scene):
     # Colors at class level - accessible to all methods
@@ -11,13 +13,13 @@ class StickmanFight(Scene):
         # Set 16 FPS
         self.camera.frame_rate = 16
         
-        # ---------- SOUND EFFECTS ----------
-        deflect_sound = self.create_sound_wave([500, 600, 700], 0.15)
-        arrow_sound = self.create_sound_wave([400, 300], 0.1)
-        thwip_sound = self.create_sound_wave([200, 150, 100], 0.08)
-        struggle_sound = self.create_sound_wave([100, 120, 80], 0.2)
-        walk_sound = self.create_sound_wave([60, 50], 0.3)
-        shutter_sound = self.create_sound_wave([800, 600], 0.05)
+        # ---------- SOUND EFFECTS (Save to temp files) ----------
+        deflect_file = self.create_sound_file([500, 600, 700], 0.15)
+        arrow_file = self.create_sound_file([400, 300], 0.1)
+        thwip_file = self.create_sound_file([200, 150, 100], 0.08)
+        struggle_file = self.create_sound_file([100, 120, 80], 0.2)
+        walk_file = self.create_sound_file([60, 50], 0.3)
+        shutter_file = self.create_sound_file([800, 600], 0.05)
         
         # Create stick figures
         blue = self.create_stickman(self.BLUE_COLOR, LEFT * 3)
@@ -70,13 +72,13 @@ class StickmanFight(Scene):
         arrow = self.create_arrow(self.YELLOW_COLOR)
         arrow.move_to(yellow.get_right() + RIGHT * 0.5 + UP * 0.3)
         
-        self.add_sound(arrow_sound, time_offset=0)
+        self.add_sound(arrow_file, time_offset=0)
         self.play(
             arrow.animate.move_to(blue.get_center() + UP * 0.3),
             run_time=0.3
         )
         
-        self.add_sound(deflect_sound, time_offset=0)
+        self.add_sound(deflect_file, time_offset=0)
         self.play(
             glow_stick.animate.rotate(90 * DEGREES),
             FadeOut(arrow),
@@ -99,12 +101,12 @@ class StickmanFight(Scene):
             arrow = self.create_arrow(self.YELLOW_COLOR)
             arrow.move_to(yellow.get_right() + RIGHT * 0.5 + UP * (0.3 + i * 0.2))
             self.add(arrow)
-            self.add_sound(arrow_sound, time_offset=0)
+            self.add_sound(arrow_file, time_offset=0)
             self.play(
                 arrow.animate.move_to(blue.get_center() + UP * (0.3 + i * 0.1)),
                 run_time=0.2
             )
-            self.add_sound(deflect_sound, time_offset=0)
+            self.add_sound(deflect_file, time_offset=0)
             self.play(
                 glow_stick.animate.rotate(-60 * DEGREES),
                 FadeOut(arrow),
@@ -138,13 +140,13 @@ class StickmanFight(Scene):
         self.remove(yellow_text)
         
         # ---------- SCENE 6 ----------
-        self.add_sound(arrow_sound, time_offset=0)
+        self.add_sound(arrow_file, time_offset=0)
         self.play(
             suction_arrow.animate.move_to(blue.get_top() + UP * 0.5),
             run_time=0.3
         )
         
-        self.add_sound(thwip_sound, time_offset=0)
+        self.add_sound(thwip_file, time_offset=0)
         self.play(
             suction_arrow.animate.move_to(blue.get_top() + UP * 0.2),
             run_time=0.1
@@ -156,7 +158,7 @@ class StickmanFight(Scene):
         self.remove(blue_text)
         
         for _ in range(3):
-            self.add_sound(struggle_sound, time_offset=0)
+            self.add_sound(struggle_file, time_offset=0)
             self.play(
                 blue.animate.shift(UP * 0.1),
                 suction_arrow.animate.shift(UP * 0.1),
@@ -174,7 +176,7 @@ class StickmanFight(Scene):
             run_time=0.3
         )
         
-        self.add_sound(walk_sound, time_offset=0)
+        self.add_sound(walk_file, time_offset=0)
         self.play(
             yellow.animate.move_to(RIGHT * 5 + DOWN * 0.5),
             bow.animate.move_to(RIGHT * 5 + DOWN * 0.5),
@@ -194,7 +196,7 @@ class StickmanFight(Scene):
         )
         
         for _ in range(2):
-            self.add_sound(struggle_sound, time_offset=0)
+            self.add_sound(struggle_file, time_offset=0)
             self.play(
                 suction_arrow.animate.shift(UP * 0.1),
                 run_time=0.1
@@ -232,14 +234,21 @@ class StickmanFight(Scene):
         
         self.add(phone_frame, blue_selfie, suction_arrow_selfie, camera_flash)
         
-        self.add_sound(shutter_sound, time_offset=0)
+        self.add_sound(shutter_file, time_offset=0)
         flash = FullScreenRectangle(color=WHITE, fill_opacity=0.8)
         self.play(FadeIn(flash), run_time=0.05)
         self.remove(flash)
         self.wait(2)
+        
+        # Clean up temp sound files
+        for f in [deflect_file, arrow_file, thwip_file, struggle_file, walk_file, shutter_file]:
+            try:
+                os.remove(f)
+            except:
+                pass
     
-    def create_sound_wave(self, frequencies, duration):
-        """Generate a simple sine wave sound"""
+    def create_sound_file(self, frequencies, duration):
+        """Generate a simple sine wave sound and save to temp file"""
         sample_rate = 44100
         samples = []
         
@@ -250,8 +259,27 @@ class StickmanFight(Scene):
             samples.extend(wave)
         
         samples = np.array(samples, dtype=np.float32)
-        byte_data = b''.join(struct.pack('<f', s) for s in samples)
-        return byte_data
+        
+        # Create WAV file in memory
+        import io
+        import wave
+        
+        wav_io = io.BytesIO()
+        with wave.open(wav_io, 'wb') as wav_file:
+            wav_file.setnchannels(1)  # Mono
+            wav_file.setsampwidth(2)  # 16-bit
+            wav_file.setframerate(sample_rate)
+            
+            # Convert float32 to int16
+            int_samples = (samples * 32767).astype(np.int16)
+            wav_file.writeframes(int_samples.tobytes())
+        
+        # Save to temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+        temp_file.write(wav_io.getvalue())
+        temp_file.close()
+        
+        return temp_file.name
     
     def create_stickman(self, color, position):
         """Create a stick figure"""
@@ -278,7 +306,7 @@ class StickmanFight(Scene):
         return bow
     
     def create_arrow(self, arrow_color, tip_radius=0.1):
-        """Create an arrow - FIXED: renamed parameter to avoid shadowing"""
+        """Create an arrow"""
         shaft = Line(LEFT * 0.3, RIGHT * 0.7, color=arrow_color, stroke_width=3)
         tip = Dot(radius=tip_radius, color=arrow_color).move_to(RIGHT * 0.7)
         return VGroup(shaft, tip)

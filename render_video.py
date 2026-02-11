@@ -15,7 +15,7 @@ def render_video():
             "frame_rate": 16,
             "pixel_width": 720,
             "pixel_height": 1280,
-            "output_file": "stickman_fight",
+            "output_file": "stickman_fight",  # This sets the output filename
             "disable_caching": True,
             "save_last_frame": False,
             "save_pngs": False,
@@ -30,10 +30,10 @@ def render_video():
         
         # Check multiple possible video paths
         possible_paths = [
-            "media/videos/main/720p16/StickmanFight.mp4",
-            "media/videos/720p16/StickmanFight.mp4",
-            "media/videos/StickmanFight/720p16/StickmanFight.mp4",
-            "media/videos/1280p16/StickmanFight.mp4",  # Your logs show 1280p16!
+            "media/videos/main/720p16/stickman_fight.mp4",
+            "media/videos/720p16/stickman_fight.mp4",
+            "media/videos/StickmanFight/720p16/stickman_fight.mp4",
+            "media/videos/1280p16/stickman_fight.mp4",  # This is the correct one!
         ]
         
         video_path = None
@@ -57,7 +57,7 @@ def render_video():
                         if file.endswith('.mp4'):
                             print(f"{subindent}🎬 {file}")
         
-        # Create download page
+        # Create download page with CORRECT filename
         with open("index.html", "w") as f:
             f.write(f"""
             <!DOCTYPE html>
@@ -128,16 +128,16 @@ def render_video():
                         "The Light Stick vs. The Bow"<br>
                         <span style="font-size: 14px;">16 FPS | 30 Seconds | With Sound Effects</span>
                     </p>
-                    <a href="{video_path if video_path else '/media/videos/1280p16/StickmanFight.mp4'}" 
+                    <a href="/media/videos/1280p16/stickman_fight.mp4" 
                        download="stickman_fight.mp4" 
                        class="download-btn">
-                        📥 Download Video
+                        📥 Download Video (48 animations!)
                     </a>
                     <div class="info">
                         ⚡ Video includes sound effects<br>
-                        🎬 47 animations | 8 scenes + bonus selfie<br>
+                        🎬 48 animations | 8 scenes + bonus selfie<br>
                         😂 "New aesthetic unlocked."<br>
-                        🐍 Python 3.9 + Manim 0.17.3
+                        📁 Filename: stickman_fight.mp4
                     </div>
                 </div>
             </body>
@@ -146,6 +146,7 @@ def render_video():
         
         print("✅ Download page created: index.html")
         print("🌐 Starting web server on port 10000...")
+        print(f"🎬 Video path: /media/videos/1280p16/stickman_fight.mp4")
         
         # Start a simple HTTP server to serve the video
         PORT = 10000

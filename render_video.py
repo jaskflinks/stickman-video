@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 
 def render_video():
     """Render the animation without requiring shell access"""
@@ -15,7 +16,8 @@ def render_video():
             "output_file": "stickman_fight",
             "disable_caching": True,
             "save_last_frame": False,
-            "save_pngs": False
+            "save_pngs": False,
+            "progress_bar": "none"
         }):
             # Import and render
             from main import StickmanFight
@@ -23,7 +25,35 @@ def render_video():
             scene.render()
             
         print("✅ Video rendered successfully!")
-        print("📁 Output file: media/videos/main/720p16/StickmanFight.mp4")
+        
+        # Check multiple possible video paths
+        possible_paths = [
+            "media/videos/main/720p16/StickmanFight.mp4",
+            "media/videos/720p16/StickmanFight.mp4",
+            "media/videos/StickmanFight/720p16/StickmanFight.mp4",
+            "media/videos/StickmanFight/720p16/StickmanFight.mp4"
+        ]
+        
+        video_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                video_path = path
+                print(f"📁 Output file found: {path}")
+                break
+        
+        if not video_path:
+            print("⚠️ Video rendered but file not found at expected paths")
+            # List directory contents for debugging
+            if os.path.exists("media"):
+                print("📁 Contents of media directory:")
+                for root, dirs, files in os.walk("media"):
+                    level = root.replace("media", "").count(os.sep)
+                    indent = " " * 2 * level
+                    print(f"{indent}{os.path.basename(root)}/")
+                    subindent = " " * 2 * (level + 1)
+                    for file in files:
+                        if file.endswith('.mp4'):
+                            print(f"{subindent}🎬 {file}")
         
         # Create download page
         with open("index.html", "w") as f:
@@ -86,6 +116,11 @@ def render_video():
                         font-size: 48px;
                         margin-bottom: 20px;
                     }
+                    .error {
+                        color: #ff6b6b;
+                        font-size: 24px;
+                        margin-bottom: 20px;
+                    }
                 </style>
             </head>
             <body>
@@ -104,7 +139,8 @@ def render_video():
                     <div class="info">
                         ⚡ Video includes sound effects<br>
                         🎬 8 scenes + bonus selfie frame<br>
-                        😂 "New aesthetic unlocked."
+                        😂 "New aesthetic unlocked."<br>
+                        🐍 Python 3.9 + Manim 0.17.3
                     </div>
                 </div>
             </body>
@@ -114,8 +150,21 @@ def render_video():
         print("✅ Download page created: index.html")
         print("🌐 Visit your Render URL to download the video")
         
+    except ImportError as e:
+        print(f"❌ Import error: {e}")
+        print("💡 Check that all dependencies are installed correctly")
+        print("📋 Current installed packages:")
+        try:
+            import pkg_resources
+            installed = [d.project_name for d in pkg_resources.working_set]
+            print(", ".join(sorted(installed)[:10]) + "...")
+        except:
+            pass
+        sys.exit(1)
     except Exception as e:
         print(f"❌ Error rendering video: {e}")
+        print("📋 Full traceback:")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
